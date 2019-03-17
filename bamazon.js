@@ -1,6 +1,5 @@
-var inquirer = require("inquirer");
 var mysql = require("mysql");
-
+var inquirer = require("inquirer");
 
 console.log("bamazonCustomer.js is running");
 
@@ -16,7 +15,23 @@ function getProductList() {
     return new Promise((resolve, reject) => {
         connection.query('SELECT * FROM products', function (error, results, fields) {
             if (error) reject(error);
-            resolve(results);
+
+            let productArray = [];
+            results.forEach(function (eachProduct) {
+                let p = {
+                    item_id: eachProduct.item_id,
+                    product_name: eachProduct.product_name,
+                    deparment_name: eachProduct.deparment_name,
+                    price: eachProduct.price,
+                    stock_quantity: eachProduct.stock_quantity
+                }
+                // console.log("each:", p);
+                productArray.push(p);
+            });
+
+
+            // console.log("array: ", productArray);
+            resolve(productArray);
             // let productArray = [];
             // console.log(results);
             // results.forEach(function (product) {
@@ -38,31 +53,68 @@ function printProductList(products) {
 var start = function () {
     connection.connect();
 
+
+    var productArray;
+    var productChoiceQuestion;
+    var selectedProduct;
+
     // Print initial list of products.
     getProductList()
         .then(products => {
+            // console.log("resolved: ", products);
+            // Store products.
+            productArray = products;
+
             // Print Product List.
-            conso
             printProductList(products);
+
+            // Create array of only product names.
+            var productNames = [];
+            products.forEach(function (eachProduct) {
+                productNames.push(eachProduct.product_name);
+            });
+
+            // Create inquirer prompt for product.
+            productChoiceQuestion = {
+                message: "Which product would you like to buy?",
+                type: "list",
+                name: "productChoice",
+                choices: productNames
+            };
+
+            inquirer.prompt([productChoiceQuestion])
+                .then(answers => {
+                    console.log("You chose", answers);
+
+                    // Find which product they chose.
+
+                    for (let i = 0; i < products.length; i++) {
+                        if (answers === products[i].product_name) {
+                            selectedProduct = products[i];
+                            console.log("selectedProduct:", selectedProduct);
+                        }
+                    }
+
+                })
+                .catch(err => {
+                    console.log(err);
+                });
+
         });
+
+    /* Start bidding loop for customer. */
+
+
+
+
+    // Great Bay as base. 
 };
 
 
 start();
 // Use async await.
 
-// Create Prompt 
-// var productChoiceQuestion = {
-//     message: "Which product would you like to buy?",
-//     type: "list",
-//     name: "productChoice",
-//     choices: products
-// };
 
-// inquirer.prompt([productChoiceQuestion, products])
-//     .then(answers => {
-//         console.log("You chose", answers);
-//     });
 
 // promptProduct(products);
 // })
